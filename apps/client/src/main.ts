@@ -1,4 +1,4 @@
-import { Candidate, Answer, Offer, Signaling } from './core'
+import { Candidate, Answer, Offer, setDependency, useDependency } from './core'
 import { map } from 'rxjs'
 import {
   log,
@@ -8,10 +8,13 @@ import {
   createAnswer,
   createAudio,
 } from './utilities'
+import { Signaling } from './ports/signaling'
+import { ChannelSignaling } from './adapter'
 
-const ID = crypto.randomUUID()
+setDependency(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
 
-const signaling = new Signaling<WebRTCMap>(ID)
+const signaling = useDependency(Signaling)
+// const signaling = new SocketSignaling<WebRTCMap>(ID)
 signaling.on('offer', Offer)
 signaling.on('answer', Answer)
 signaling.on('candidate', Candidate)
@@ -33,8 +36,8 @@ signaling.events$
   .pipe(
     ofType(Offer),
     map(async (offer, i) => {
-      console.log(offer);
-      
+      console.log(offer)
+
       if (!i) await peer.setRemoteDescription(offer)
       return offer
     })
@@ -53,16 +56,16 @@ signaling.events$.pipe(ofType(Answer)).subscribe(async (response) => {
 })
 
 signaling.events$.pipe(ofType(Candidate)).subscribe(async (candidate) => {
-  console.log(candidate);
-  
+  console.log(candidate)
+
   if (peer.remoteDescription) {
     await peer.addIceCandidate(candidate)
   }
 })
 
 peer.onnegotiationneeded = async (ev) => {
-  console.log(ev);
-  console.log(peer.connectionState);
+  console.log(ev)
+  console.log(peer.connectionState)
   const sdp = await createOffer(peer)
   signaling.emit('offer', new Offer(sdp))
   if (peer.connectionState !== 'connected') {
@@ -74,8 +77,8 @@ peer.ondatachannel = ({ channel }) => {
 }
 
 peer.onconnectionstatechange = (ev) => {
-  console.log(ev);
-  
+  console.log(ev)
+
   log(peer, 'connection')
 
   if (peer.connectionState === 'connected') {
@@ -88,8 +91,8 @@ peer.onconnectionstatechange = (ev) => {
 }
 
 peer.ontrack = ({ track }) => {
-  console.log(track);
-  
+  console.log(track)
+
   if (!remoteStream) {
     remoteStream = new MediaStream()
   }

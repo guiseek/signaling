@@ -8,10 +8,12 @@ export class Signaling<T extends EventMap> {
   private _events = new Subject<T[keyof T]>()
   readonly events$ = this._events.asObservable()
 
-  constructor(private name: string) {
+  protected name = crypto.randomUUID()
+
+  constructor() {
     this.channel = new BroadcastChannel('signaling')
     this.channel.onmessage = ({ data }: MessageEvent<Payload<T[keyof T]>>) => {
-      if (data.name !== name) {
+      if (data.name !== this.name) {
         const event = this.map.get(data.type)
         this._events.next(new event(data.payload))
       }

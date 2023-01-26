@@ -33,3 +33,7 @@ interface WebRTCMap {
   answer: Answer
   candidate: RTCIceCandidateInit
 }
+
+interface Provider {
+  onmessage: ((ev: MessageEvent<any>) => any) | null
+}
