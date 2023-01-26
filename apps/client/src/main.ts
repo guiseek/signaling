@@ -65,10 +65,14 @@ signaling.events$.pipe(ofType(Candidate)).subscribe(async (candidate) => {
 
 peer.onnegotiationneeded = async (ev) => {
   console.log(ev)
-  console.log(peer.connectionState)
-  const sdp = await createOffer(peer)
-  signaling.emit('offer', new Offer(sdp))
-  if (peer.connectionState !== 'connected') {
+
+  const offer = await createOffer(peer)
+  signaling.emit('offer', new Offer(offer))
+}
+
+peer.onconnectionstatechange = async () => {
+  if (peer.connectionState === 'connected') {
+    oldState = 'connected'
   }
 }
 
@@ -76,17 +80,25 @@ peer.ondatachannel = ({ channel }) => {
   channel.onopen = console.log
 }
 
-peer.onconnectionstatechange = (ev) => {
-  console.log(ev)
+let oldState: RTCPeerConnectionState = 'disconnected'
 
+peer.onconnectionstatechange = async () => {
   log(peer, 'connection')
 
   if (peer.connectionState === 'connected') {
-    const channel = peer.createDataChannel('data')
-    channel.onopen = console.log
     document.body.appendChild(remote)
+    oldState = 'connected'
   } else {
     remote.remove()
+  }
+
+  if (peer.connectionState === 'disconnected') {
+    if (oldState === 'connected') {
+      const offer = await createOffer(peer)
+      signaling.emit('offer', new Offer(offer))
+    }
+
+    oldState = 'disconnected'
   }
 }
 
