@@ -20,7 +20,7 @@ const container = new Map()
  * @param type {AbstractType<T>} Abstração
  * @param concrete {TypeOf<T>} Classe responsável
  */
-export function setDependency<T>(type: AbstractType<T>, concrete: TypeOf<T>) {
+export function setProvider<T>(type: AbstractType<T>, concrete: TypeOf<T>) {
   container.set(type, concrete)
 }
 
@@ -29,7 +29,7 @@ export function setDependency<T>(type: AbstractType<T>, concrete: TypeOf<T>) {
  * @param type {AbstractType<T>} Abstração
  * @returns {T} Classe responsável
  */
-export function useDependency<T>(type: AbstractType<T>): T {
+export function useProvider<T>(type: AbstractType<T>): T {
   const concrete = container.get(type)
 
   if (!concrete) {

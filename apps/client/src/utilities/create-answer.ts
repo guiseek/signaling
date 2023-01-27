@@ -1,9 +1,8 @@
 export const createAnswer = async (
   peer: RTCPeerConnection,
-  offer: RTCSessionDescription
+  options?: RTCAnswerOptions
 ) => {
-  await peer.setRemoteDescription(offer)
-  const sdp = await peer.createAnswer()
+  const sdp = await peer.createAnswer(options)
   await peer.setLocalDescription(sdp)
   return sdp
 }

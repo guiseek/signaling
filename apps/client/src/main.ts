@@ -1,5 +1,14 @@
-import { Candidate, Answer, Offer, setDependency, useDependency } from './core'
 import { distinctUntilChanged, filter, map } from 'rxjs'
+import { ChannelSignaling, SocketSignaling } from './adapter'
+import { Signaling } from './ports/signaling'
+import {
+  Offer,
+  Answer,
+  useState,
+  Candidate,
+  setProvider,
+  useProvider,
+} from './core'
 import {
   ofType,
   canAnswer,
@@ -7,14 +16,13 @@ import {
   createAnswer,
   createAudio,
 } from './utilities'
-import { Signaling } from './ports/signaling'
-import { ChannelSignaling, SocketSignaling } from './adapter'
-import { useState } from './use-state'
 
-// setDependency(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
-setDependency(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
+setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
 
-const signaling = useDependency(Signaling)
+// Execute "npm run dev:server" antes de usar o SocketSignaling
+// setProvider(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
+
+const signaling = useProvider(Signaling)
 signaling.on('offer', Offer)
 signaling.on('answer', Answer)
 signaling.on('candidate', Candidate)
@@ -61,22 +69,25 @@ signaling.events$
     map(async (offer) => {
       console.log(signaling.name, 'Recebi uma oferta')
       await peer.setRemoteDescription(offer)
+      console.log(signaling.name, 'Configurei uma descrição remota')
       return offer
     })
   )
   .subscribe(async (response) => {
     await response
     if (canAnswer(peer.signalingState)) {
-      console.log(signaling.name, 'Recebi uma oferta')
-      const sdp = await createAnswer(peer, await response)
+      console.log(signaling.name, 'Aceitei uma oferta')
+      const sdp = await createAnswer(peer)
+      console.log(signaling.name, 'Configurei uma descrição local')
       signaling.emit('answer', new Answer(sdp))
       console.log(signaling.name, 'Enviei uma resposta')
     }
   })
   
   signaling.events$.pipe(ofType(Answer)).subscribe(async (response) => {
-    peer.setRemoteDescription(response)
-    console.log(signaling.name, 'Configurei uma resposta remota')
+  console.log(signaling.name, 'Recebi uma resposta')
+  peer.setRemoteDescription(response)
+  console.log(signaling.name, 'Configurei uma descrição remota')
 })
 
 signaling.events$.pipe(ofType(Candidate)).subscribe(async (candidate) => {
