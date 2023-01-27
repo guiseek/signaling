@@ -1,4 +1,4 @@
-import { distinctUntilChanged, filter, map } from 'rxjs'
+import { combineLatest, distinctUntilChanged, filter, map } from 'rxjs'
 import { ChannelSignaling, SocketSignaling } from './adapter'
 import { Signaling } from './ports/signaling'
 import {
@@ -48,7 +48,7 @@ const state = useState<RTCState>({
   iceGathering: 'new',
 })
 
-// state.value$.subscribe(signaling.log)
+state.value$.subscribe(console.log)
 
 peer.onsignalingstatechange = () => {
   state.update('signaling', peer.signalingState)
@@ -108,7 +108,13 @@ peer.onnegotiationneeded = async () => {
 const connection$ = state.select((state) => state.connection)
 
 const connected$ = connection$.pipe(filter((state) => state === 'connected'))
-const retry$ = connection$.pipe(
+const retryAfterConnecting$ = connection$.pipe(
+  filter((state) => state === 'disconnected'),
+  distinctUntilChanged((prev, curr) => {
+    return prev !== 'disconnected' && curr === 'connecting'
+  })
+)
+const retryAfterDisconnected$ = connection$.pipe(
   filter((state) => state === 'disconnected'),
   distinctUntilChanged((prev, curr) => {
     return prev !== 'disconnected' && curr === 'disconnected'
@@ -126,7 +132,10 @@ disconnected$.subscribe(() => {
   remote.remove()
 })
 
-retry$.subscribe(async () => {
+combineLatest([
+  retryAfterDisconnected$,
+  retryAfterConnecting$
+]).subscribe(async () => {
   const offer = await createOffer(peer)
   signaling.emit('offer', new Offer(offer))
   signaling.log('Fomos desconectados, enviei uma nova oferta')
