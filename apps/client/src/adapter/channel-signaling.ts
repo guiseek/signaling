@@ -1,11 +1,10 @@
 import { Signaling } from '../ports/signaling'
 
 export class ChannelSignaling<E extends WebRTCMap> extends Signaling<E> {
-  provider: BroadcastChannel
+  provider= new BroadcastChannel('signaling')
 
   constructor() {
     super()
-    this.provider = new BroadcastChannel('signaling')
     this.provider.onmessage = ({ data }: MessageEvent<Payload<E[keyof E]>>) => {
       if (data.name !== this.name) {
         const event = this.map.get(data.type)

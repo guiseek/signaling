@@ -23,4 +23,3 @@ dist-ssr
 *.sln
 *.sw?
 tmp/
-apps/client/src/adapter/socket-signaling.ts

@@ -9,12 +9,12 @@ import {
   createAudio,
 } from './utilities'
 import { Signaling } from './ports/signaling'
-import { ChannelSignaling } from './adapter'
+import { ChannelSignaling, SocketSignaling } from './adapter'
 
 setDependency(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
+// setDependency(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
 
 const signaling = useDependency(Signaling)
-// const signaling = new SocketSignaling<WebRTCMap>(ID)
 signaling.on('offer', Offer)
 signaling.on('answer', Answer)
 signaling.on('candidate', Candidate)
