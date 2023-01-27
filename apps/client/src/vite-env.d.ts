@@ -36,6 +36,7 @@ interface WebRTCMap {
 }
 
 interface RTCState {
+  stream: MediaStream
   negotiationAttempts: number
   signaling: RTCSignalingState
   connection: RTCPeerConnectionState
@@ -46,4 +47,13 @@ interface RTCState {
 
 interface Provider {
   onmessage: ((ev: MessageEvent<any>) => any) | null
+}
+
+interface State<T> {
+  value$: Observable<T>
+  select: <K>(mapFn: (state: T) => K) => Observable<K>
+  value: () => T
+  patch: (newState: Partial<T>) => void
+  update: <K extends keyof T>(key: K, val: T[K]) => void
+  set: (newState: T) => void
 }

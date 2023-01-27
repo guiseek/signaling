@@ -1,110 +1,30 @@
-import { combineLatest, distinctUntilChanged, filter, map } from 'rxjs'
-import { Signaling } from './ports/signaling'
-import { Offer, Answer, useState, Candidate, useProvider } from './core'
-import {
-  ofType,
-  canAnswer,
-  createOffer,
-  createAnswer,
-  createAudio,
-} from './utilities'
-import './style.scss'
+import { combineLatest, distinctUntilChanged, filter } from 'rxjs'
+import { connectionHandler } from './connection-handler'
+import { createOffer, createAudio } from './utilities'
+import { stateUpdater } from './state-updater'
+import { Offer, Candidate } from './core'
+import { signaling } from './signaling'
+import { state } from './state'
 import { dom } from './dom'
-
-const signaling = useProvider(Signaling)
-
-/**
- * Types of negotiations
- */
-signaling.on('offer', Offer)
-signaling.on('answer', Answer)
-signaling.on('candidate', Candidate)
+import './style.scss'
 
 const peer = new RTCPeerConnection()
-const stream = new MediaStream()
+// const stream = new MediaStream()
 const remote = createAudio()
 const local = createAudio()
-
-/**
- * Initial state
- */
-const state = useState<RTCState>({
-  negotiationAttempts: 0,
-  signaling: 'closed',
-  connection: 'new',
-  iceConnection: 'closed',
-  iceGathering: 'new',
-  candidate: null,
-})
 
 dom.progress.show()
 dom.snackBar.show('Aguardando peer...')
 
-/**
- * Keeps states up to date
- */
-peer.onicecandidate = (ev) => {
-  state.update('candidate', ev.candidate)
-}
-peer.onsignalingstatechange = () => {
-  state.update('signaling', peer.signalingState)
-}
-peer.oniceconnectionstatechange = () => {
-  state.update('iceConnection', peer.iceConnectionState)
-}
-peer.onconnectionstatechange = () => {
-  state.update('connection', peer.connectionState)
-}
-peer.onicegatheringstatechange = () => {
-  state.update('iceGathering', peer.iceGatheringState)
-}
-peer.onnegotiationneeded = async () => {
-  const { negotiationAttempts } = state.value()
-  const value = negotiationAttempts + 1
-  state.update('negotiationAttempts', value)
-}
+stateUpdater(peer)
+connectionHandler(peer)
 
 state.value$.subscribe(console.log)
 
 /**
- * Negotiation handlers
- */
-signaling.events$
-  .pipe(
-    ofType(Offer),
-    map(async (offer) => {
-      signaling.log('Recebi uma oferta')
-      await peer.setRemoteDescription(offer)
-      signaling.log('Configurei uma descrição remota')
-      return offer
-    })
-  )
-  .subscribe(async (offer) => {
-    await offer
-    if (canAnswer(peer.signalingState)) {
-      signaling.log('Aceitei uma oferta')
-      const answer = await createAnswer(peer)
-      signaling.log('Configurei uma descrição local')
-      signaling.emit('answer', new Answer(answer))
-      signaling.log('Enviei uma resposta')
-    }
-  })
-
-signaling.events$.pipe(ofType(Answer)).subscribe(async (response) => {
-  signaling.log('Recebi uma resposta')
-  peer.setRemoteDescription(response)
-  signaling.log('Configurei uma descrição remota')
-})
-
-signaling.events$.pipe(ofType(Candidate)).subscribe(async (candidate) => {
-  if (peer.remoteDescription) {
-    await peer.addIceCandidate(candidate)
-  }
-})
-
-/**
  * Base of triggers
  */
+const stream$ = state.select((state) => state.stream)
 const candidate$ = state.select((state) => state.candidate)
 const connection$ = state.select((state) => state.connection)
 const negotiationAttempts$ = state.select((state) => state.negotiationAttempts)
@@ -173,13 +93,10 @@ combineLatest([retryAfterDisconnected$, retryAfterConnecting$]).subscribe(
   }
 )
 
-peer.ontrack = ({ track }) => {
-  if (track) {
-    stream.addTrack(track)
-    remote.srcObject = stream
-    remote.autoplay = true
-  }
-}
+stream$.subscribe(stream => {
+  remote.srcObject = stream
+  remote.autoplay = true
+})
 
 navigator.mediaDevices.getUserMedia({ audio: true }).then(async (stream) => {
   const [audioTrack] = stream.getAudioTracks()
