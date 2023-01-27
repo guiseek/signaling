@@ -51,16 +51,16 @@ const state = useState<RTCState>({
 // state.value$.subscribe(console.log)
 
 peer.onsignalingstatechange = () => {
-  state.patch({ signaling: peer.signalingState })
+  state.update('signaling', peer.signalingState)
 }
 peer.oniceconnectionstatechange = () => {
-  state.patch({ iceConnection: peer.iceConnectionState })
+  state.update('iceConnection', peer.iceConnectionState)
 }
 peer.onconnectionstatechange = () => {
-  state.patch({ connection: peer.connectionState })
+  state.update('connection', peer.connectionState)
 }
 peer.onicegatheringstatechange = () => {
-  state.patch({ iceGathering: peer.iceGatheringState })
+  state.update('iceGathering', peer.iceGatheringState)
 }
 
 signaling.events$
@@ -83,8 +83,8 @@ signaling.events$
       console.log(signaling.name, 'Enviei uma resposta')
     }
   })
-  
-  signaling.events$.pipe(ofType(Answer)).subscribe(async (response) => {
+
+signaling.events$.pipe(ofType(Answer)).subscribe(async (response) => {
   console.log(signaling.name, 'Recebi uma resposta')
   peer.setRemoteDescription(response)
   console.log(signaling.name, 'Configurei uma descrição remota')
