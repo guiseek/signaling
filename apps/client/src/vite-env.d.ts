@@ -36,10 +36,12 @@ interface WebRTCMap {
 }
 
 interface RTCState {
+  negotiationAttempts: number
   signaling: RTCSignalingState
   connection: RTCPeerConnectionState
   iceConnection: RTCIceConnectionState
   iceGathering: RTCIceGatheringState
+  candidate: RTCIceCandidate | null
 }
 
 interface Provider {
