@@ -1,7 +1,6 @@
 import { Candidate, Answer, Offer, setDependency, useDependency } from './core'
-import { map } from 'rxjs'
+import { distinctUntilChanged, filter, map } from 'rxjs'
 import {
-  log,
   ofType,
   canAnswer,
   createOffer,
@@ -10,16 +9,17 @@ import {
 } from './utilities'
 import { Signaling } from './ports/signaling'
 import { ChannelSignaling, SocketSignaling } from './adapter'
+import { useState } from './use-state'
 
-setDependency(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
-// setDependency(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
+// setDependency(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
+setDependency(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
 
 const signaling = useDependency(Signaling)
 signaling.on('offer', Offer)
 signaling.on('answer', Answer)
 signaling.on('candidate', Candidate)
 
-let remoteStream: MediaStream
+const remoteStream = new MediaStream()
 const remote = createAudio()
 const local = createAudio()
 
@@ -29,88 +29,100 @@ peer.onicecandidate = (ev) => {
   if (ev.candidate) {
     const candidate = new Candidate(ev.candidate)
     signaling.emit('candidate', candidate)
+    console.log(signaling.name, 'Enviei meus candidatos')
   }
+}
+
+const state = useState<RTCState>({
+  signaling: 'closed',
+  connection: 'new',
+  iceConnection: 'closed',
+  iceGathering: 'new',
+})
+
+// state.value$.subscribe(console.log)
+
+peer.onsignalingstatechange = () => {
+  state.patch({ signaling: peer.signalingState })
+}
+peer.oniceconnectionstatechange = () => {
+  state.patch({ iceConnection: peer.iceConnectionState })
+}
+peer.onconnectionstatechange = () => {
+  state.patch({ connection: peer.connectionState })
+}
+peer.onicegatheringstatechange = () => {
+  state.patch({ iceGathering: peer.iceGatheringState })
 }
 
 signaling.events$
   .pipe(
     ofType(Offer),
-    map(async (offer, i) => {
-      console.log(offer)
-
-      if (!i) await peer.setRemoteDescription(offer)
+    map(async (offer) => {
+      console.log(signaling.name, 'Recebi uma oferta')
+      await peer.setRemoteDescription(offer)
       return offer
     })
   )
   .subscribe(async (response) => {
-    console.log(await response)
+    await response
     if (canAnswer(peer.signalingState)) {
+      console.log(signaling.name, 'Recebi uma oferta')
       const sdp = await createAnswer(peer, await response)
       signaling.emit('answer', new Answer(sdp))
+      console.log(signaling.name, 'Enviei uma resposta')
     }
   })
-
-signaling.events$.pipe(ofType(Answer)).subscribe(async (response) => {
-  peer.setRemoteDescription(response)
-  console.log(response)
+  
+  signaling.events$.pipe(ofType(Answer)).subscribe(async (response) => {
+    peer.setRemoteDescription(response)
+    console.log(signaling.name, 'Configurei uma resposta remota')
 })
 
 signaling.events$.pipe(ofType(Candidate)).subscribe(async (candidate) => {
-  console.log(candidate)
-
   if (peer.remoteDescription) {
     await peer.addIceCandidate(candidate)
   }
 })
 
-peer.onnegotiationneeded = async (ev) => {
-  console.log(ev)
+peer.onnegotiationneeded = async () => {
+  console.log(signaling.name, 'Vamos negociar')
 
   const offer = await createOffer(peer)
   signaling.emit('offer', new Offer(offer))
+
+  console.log(signaling.name, 'Enviei uma oferta')
 }
 
-peer.onconnectionstatechange = async () => {
-  if (peer.connectionState === 'connected') {
-    oldState = 'connected'
-  }
-}
+const connection$ = state.select((state) => state.connection)
 
-peer.ondatachannel = ({ channel }) => {
-  channel.onopen = console.log
-}
+const connected$ = connection$.pipe(filter((state) => state === 'connected'))
+const retry$ = connection$.pipe(
+  filter((state) => state === 'disconnected'),
+  distinctUntilChanged((prev, curr) => {
+    return prev !== 'disconnected' && curr === 'disconnected'
+  })
+)
+const disconnected$ = connection$.pipe(
+  filter((state) => state === 'disconnected')
+)
 
-let oldState: RTCPeerConnectionState = 'disconnected'
+connected$.subscribe(() => {
+  document.body.appendChild(remote)
+})
 
-peer.onconnectionstatechange = async () => {
-  log(peer, 'connection')
+disconnected$.subscribe(() => {
+  remote.remove()
+})
 
-  if (peer.connectionState === 'connected') {
-    document.body.appendChild(remote)
-    oldState = 'connected'
-  } else {
-    remote.remove()
-  }
-
-  if (peer.connectionState === 'disconnected') {
-    if (oldState === 'connected') {
-      const offer = await createOffer(peer)
-      signaling.emit('offer', new Offer(offer))
-    }
-
-    oldState = 'disconnected'
-  }
-}
+retry$.subscribe(async () => {
+  const offer = await createOffer(peer)
+  signaling.emit('offer', new Offer(offer))
+  console.log(signaling.name, 'Fomos desconectados, enviei uma nova oferta')
+})
 
 peer.ontrack = ({ track }) => {
-  console.log(track)
-
-  if (!remoteStream) {
-    remoteStream = new MediaStream()
-  }
   if (track) {
-    console.log(track)
-
     remoteStream.addTrack(track)
     remote.srcObject = remoteStream
     remote.autoplay = true
@@ -122,20 +134,5 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then(async (stream) => {
   local.srcObject = stream
   local.muted = true
   peer.addTrack(audioTrack)
-
   document.body.appendChild(local)
 })
-
-peer.onsignalingstatechange = () => {
-  log(peer, 'signaling')
-}
-
-peer.oniceconnectionstatechange = () => {
-  log(peer, 'iceConnection')
-}
-
-peer.onicegatheringstatechange = () => {
-  log(peer, 'iceGathering')
-}
-
-// createOffer()

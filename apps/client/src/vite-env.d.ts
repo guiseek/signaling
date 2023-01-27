@@ -34,6 +34,13 @@ interface WebRTCMap {
   candidate: RTCIceCandidateInit
 }
 
+interface RTCState {
+  signaling: RTCSignalingState
+  connection: RTCPeerConnectionState
+  iceConnection: RTCIceConnectionState
+  iceGathering: RTCIceGatheringState
+}
+
 interface Provider {
   onmessage: ((ev: MessageEvent<any>) => any) | null
 }

@@ -1,9 +1,9 @@
-import {BehaviorSubject, distinctUntilChanged, map} from 'rxjs'
+import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs'
 
 export const useState = <T>(initial: T) => {
   const _state = new BehaviorSubject(initial)
   const value = () => _state.getValue()
-  const $ = _state.asObservable()
+  const value$ = _state.asObservable()
 
   const select = <K>(mapFn: (state: T) => K) => {
     return _state.asObservable().pipe(
@@ -12,12 +12,15 @@ export const useState = <T>(initial: T) => {
     )
   }
 
-  const setState = (newState: Partial<T>) => {
-    _state.next({
-      ...value(),
-      ...newState,
-    })
+  const patch = (newState: Partial<T>) => {
+    _state.next({ ...value(), ...newState })
   }
 
-  return {$, select, value, setState}
+  const update = <K extends keyof T>(key: K, val: T[K]) => {
+    _state.next({ ...value(), ...{ [key]: val } })
+  }
+
+  const set = (newState: T) => _state.next(newState)
+
+  return { value$, select, value, patch, update, set }
 }
