@@ -4,21 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
+    <!-- <link
+      rel="stylesheet"
+      href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css"
+    /> -->
+    <title>Signaling</title>
   </head>
   <body>
-    <div id="app"></div>
+    <progress id="progress" indeterminated></progress>
 
-    <!-- <section>
-      <h3>Remote</h3>
-      <audio id="remote" autoplay controls></audio>
-    </section>
+    <main></main>
 
-    <section>
-      <h3>Local</h3>
-      <audio id="local" autoplay controls></audio>
-    </section> -->
-
+    <dialog id="snack-bar">
+      <p></p>
+      <button type="button" class="outline" onclick="this.parentElement.open = false">
+        Fechar
+      </button>
+    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

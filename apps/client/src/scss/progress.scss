@@ -1,0 +1,86 @@
+:root {
+	--spacing: 0;
+	--border-radius: 0;
+	--progress-background-color: white;
+	--progress-color: black;
+	--border-radius: 0;
+}
+
+progress {
+  display: inline-block; // 1
+  vertical-align: baseline; // 2
+}
+
+// Pico
+// ––––––––––––––––––––
+
+progress {
+  // Reset the default appearance
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  // Styles
+  display: inline-block;
+  appearance: none;
+  width: 100vw;
+  height: 0.2rem;
+  margin-bottom: calc(var(--spacing) * 0.2);
+  overflow: hidden;
+
+  // Remove Firefox and Opera border
+  border: 0;
+  border-radius: var(--border-radius);
+  background-color: var(--progress-background-color);
+
+  // IE10 uses `color` to set the bar background-color
+  color: var(--progress-color);
+
+  &::-webkit-progress-bar {
+    border-radius: var(--border-radius);
+    background: none;
+  }
+  &[value]::-webkit-progress-value {
+    background-color: var(--progress-color);
+  }
+  &::-moz-progress-bar {
+    background-color: var(--progress-color);
+  }
+
+  // Indeterminate state
+  @media (prefers-reduced-motion: no-preference) {
+    &:indeterminate {
+      background: var(--progress-background-color)
+        linear-gradient(
+          to right,
+          var(--progress-color) 30%,
+          var(--progress-background-color) 30%
+        )
+        top left / 150% 150% no-repeat;
+      animation: progress-indeterminate  1s linear infinite;
+
+      &[value]::-webkit-progress-value {
+        background-color: transparent;
+      }
+      &::-moz-progress-bar {
+        background-color: transparent;
+      }
+    }
+  }
+}
+
+[dir="rtl"] {
+  @media (prefers-reduced-motion: no-preference) {
+    progress:indeterminate {
+      animation-direction: reverse;
+    }
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

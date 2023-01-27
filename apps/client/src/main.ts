@@ -16,6 +16,8 @@ import {
   createAnswer,
   createAudio,
 } from './utilities'
+import './style.scss'
+import { dom } from './dom'
 
 setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
 
@@ -47,6 +49,9 @@ const state = useState<RTCState>({
   iceConnection: 'closed',
   iceGathering: 'new',
 })
+
+dom.progress.show()
+dom.snackBar.show('Aguardando peer...')
 
 state.value$.subscribe(console.log)
 
@@ -108,6 +113,10 @@ peer.onnegotiationneeded = async () => {
 const connection$ = state.select((state) => state.connection)
 
 const connected$ = connection$.pipe(filter((state) => state === 'connected'))
+const connecting$ = connection$.pipe(filter((state) => state === 'connecting'))
+const disconnected$ = connection$.pipe(
+  filter((state) => state === 'disconnected')
+)
 const retryAfterConnecting$ = connection$.pipe(
   filter((state) => state === 'disconnected'),
   distinctUntilChanged((prev, curr) => {
@@ -120,26 +129,33 @@ const retryAfterDisconnected$ = connection$.pipe(
     return prev !== 'disconnected' && curr === 'disconnected'
   })
 )
-const disconnected$ = connection$.pipe(
-  filter((state) => state === 'disconnected')
-)
 
 connected$.subscribe(() => {
   document.body.appendChild(remote)
+  dom.progress.hidden()
+  dom.snackBar.show('Conectado')
+
+  setTimeout(() => {
+    dom.snackBar.hidden()
+  }, 2000)
 })
 
 disconnected$.subscribe(() => {
+  dom.snackBar.show('Desconectado')
   remote.remove()
 })
 
-combineLatest([
-  retryAfterDisconnected$,
-  retryAfterConnecting$
-]).subscribe(async () => {
-  const offer = await createOffer(peer)
-  signaling.emit('offer', new Offer(offer))
-  signaling.log('Fomos desconectados, enviei uma nova oferta')
+connecting$.subscribe(() => {
+  dom.snackBar.show('Conectando...')
 })
+
+combineLatest([retryAfterDisconnected$, retryAfterConnecting$]).subscribe(
+  async () => {
+    const offer = await createOffer(peer)
+    signaling.emit('offer', new Offer(offer))
+    signaling.log('Fomos desconectados, enviei uma nova oferta')
+  }
+)
 
 peer.ontrack = ({ track }) => {
   if (track) {
