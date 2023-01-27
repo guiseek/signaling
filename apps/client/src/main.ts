@@ -27,7 +27,7 @@ signaling.on('offer', Offer)
 signaling.on('answer', Answer)
 signaling.on('candidate', Candidate)
 
-const remoteStream = new MediaStream()
+const stream = new MediaStream()
 const remote = createAudio()
 const local = createAudio()
 
@@ -37,7 +37,7 @@ peer.onicecandidate = (ev) => {
   if (ev.candidate) {
     const candidate = new Candidate(ev.candidate)
     signaling.emit('candidate', candidate)
-    console.log(signaling.name, 'Enviei meus candidatos')
+    signaling.log('Enviei meus candidatos')
   }
 }
 
@@ -48,7 +48,7 @@ const state = useState<RTCState>({
   iceGathering: 'new',
 })
 
-// state.value$.subscribe(console.log)
+// state.value$.subscribe(signaling.log)
 
 peer.onsignalingstatechange = () => {
   state.update('signaling', peer.signalingState)
@@ -67,27 +67,27 @@ signaling.events$
   .pipe(
     ofType(Offer),
     map(async (offer) => {
-      console.log(signaling.name, 'Recebi uma oferta')
+      signaling.log('Recebi uma oferta')
       await peer.setRemoteDescription(offer)
-      console.log(signaling.name, 'Configurei uma descrição remota')
+      signaling.log('Configurei uma descrição remota')
       return offer
     })
   )
   .subscribe(async (response) => {
     await response
     if (canAnswer(peer.signalingState)) {
-      console.log(signaling.name, 'Aceitei uma oferta')
+      signaling.log('Aceitei uma oferta')
       const sdp = await createAnswer(peer)
-      console.log(signaling.name, 'Configurei uma descrição local')
+      signaling.log('Configurei uma descrição local')
       signaling.emit('answer', new Answer(sdp))
-      console.log(signaling.name, 'Enviei uma resposta')
+      signaling.log('Enviei uma resposta')
     }
   })
 
 signaling.events$.pipe(ofType(Answer)).subscribe(async (response) => {
-  console.log(signaling.name, 'Recebi uma resposta')
+  signaling.log('Recebi uma resposta')
   peer.setRemoteDescription(response)
-  console.log(signaling.name, 'Configurei uma descrição remota')
+  signaling.log('Configurei uma descrição remota')
 })
 
 signaling.events$.pipe(ofType(Candidate)).subscribe(async (candidate) => {
@@ -97,12 +97,12 @@ signaling.events$.pipe(ofType(Candidate)).subscribe(async (candidate) => {
 })
 
 peer.onnegotiationneeded = async () => {
-  console.log(signaling.name, 'Vamos negociar')
+  signaling.log('Vamos negociar')
 
   const offer = await createOffer(peer)
   signaling.emit('offer', new Offer(offer))
 
-  console.log(signaling.name, 'Enviei uma oferta')
+  signaling.log('Enviei uma oferta')
 }
 
 const connection$ = state.select((state) => state.connection)
@@ -129,13 +129,13 @@ disconnected$.subscribe(() => {
 retry$.subscribe(async () => {
   const offer = await createOffer(peer)
   signaling.emit('offer', new Offer(offer))
-  console.log(signaling.name, 'Fomos desconectados, enviei uma nova oferta')
+  signaling.log('Fomos desconectados, enviei uma nova oferta')
 })
 
 peer.ontrack = ({ track }) => {
   if (track) {
-    remoteStream.addTrack(track)
-    remote.srcObject = remoteStream
+    stream.addTrack(track)
+    remote.srcObject = stream
     remote.autoplay = true
   }
 }

@@ -10,6 +10,7 @@ interface Message {
 interface Payload<T, K = string> {
   name: string
   type: K
+  sequence: number
   payload: T
 }
 interface Window {
