@@ -48,7 +48,7 @@ const state = useState<RTCState>({
   iceGathering: 'new',
 })
 
-state.value$.subscribe(console.log)
+// state.value$.subscribe(console.log)
 
 peer.onsignalingstatechange = () => {
   state.update('signaling', peer.signalingState)
