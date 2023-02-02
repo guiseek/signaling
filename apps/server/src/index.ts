@@ -11,3 +11,8 @@ wss.on('connection', (ws) => {
     })
   })
 })
+
+wss.on('listening', () => {
+  console.log(`running on port 3000`);
+  
+})

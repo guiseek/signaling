@@ -6,7 +6,7 @@
   "devDependencies": {},
   "scripts": {
     "dev": "nodemon --watch 'src/index.ts' --exec 'node --loader ts-node/esm src/index.ts'",
-    "build": "npx tsc --out ../../dist/server/index.js",
+    "build": "tsc --project tsconfig.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -1,5 +1,5 @@
 import { combineLatest, distinctUntilChanged, filter, map } from 'rxjs'
-import { ChannelSignaling, SocketSignaling } from './adapter'
+import { SocketSignaling } from './adapter'
 import { Signaling } from './ports/signaling'
 import {
   Offer,
@@ -17,10 +17,10 @@ import {
   createAudio,
 } from './utilities'
 
-setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
+// setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
 
 // Execute "npm run dev:server" antes de usar o SocketSignaling
-// setProvider(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
+setProvider(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
 
 const signaling = useProvider(Signaling)
 signaling.on('offer', Offer)
