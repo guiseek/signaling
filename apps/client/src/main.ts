@@ -16,7 +16,6 @@ import {
   createAnswer,
   createAudio,
   takeStream,
-  pickTrack,
   createAnalyser,
 } from './utilities'
 import { pitch } from './audio/pitch'
