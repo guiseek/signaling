@@ -9,6 +9,8 @@ export abstract class Signaling<E extends WebRTCMap = WebRTCMap> {
     return this._SEQ
   }
 
+  abstract onOpen(fn: <E>(e: E) => void): void
+
   abstract provider: Provider
 
   protected map = new Map()

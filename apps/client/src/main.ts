@@ -99,10 +99,11 @@ signaling.events$.pipe(ofType(Candidate)).subscribe(async (candidate) => {
 peer.onnegotiationneeded = async () => {
   signaling.log('Vamos negociar')
 
-  const offer = await createOffer(peer)
-  signaling.emit('offer', new Offer(offer))
-
-  signaling.log('Enviei uma oferta')
+  signaling.onOpen(async () => {
+    const offer = await createOffer(peer)
+    signaling.emit('offer', new Offer(offer))
+    signaling.log('Enviei uma oferta')
+  })
 }
 
 const connection$ = state.select((state) => state.connection)
@@ -132,14 +133,13 @@ disconnected$.subscribe(() => {
   remote.remove()
 })
 
-combineLatest([
-  retryAfterDisconnected$,
-  retryAfterConnecting$
-]).subscribe(async () => {
-  const offer = await createOffer(peer)
-  signaling.emit('offer', new Offer(offer))
-  signaling.log('Fomos desconectados, enviei uma nova oferta')
-})
+combineLatest([retryAfterDisconnected$, retryAfterConnecting$]).subscribe(
+  async () => {
+    const offer = await createOffer(peer)
+    signaling.emit('offer', new Offer(offer))
+    signaling.log('Fomos desconectados, enviei uma nova oferta')
+  }
+)
 
 peer.ontrack = ({ track }) => {
   if (track) {

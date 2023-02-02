@@ -2,6 +2,10 @@ import { Signaling } from '../ports/signaling'
 
 export class ChannelSignaling<E extends WebRTCMap> extends Signaling<E> {
   provider= new BroadcastChannel('signaling')
+  
+  onOpen(fn: <E>(e: E) => void): void {
+    fn()
+  }
 
   constructor() {
     super()
