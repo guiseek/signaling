@@ -1,6 +1,7 @@
 import { combineLatest, distinctUntilChanged, filter, map } from 'rxjs'
-import { SocketSignaling } from './adapter'
 import { Signaling } from './ports/signaling'
+import { SocketSignaling } from './adapter'
+import { pitch } from './audio/pitch'
 import {
   Offer,
   Answer,
@@ -18,7 +19,7 @@ import {
   takeStream,
   createAnalyser,
 } from './utilities'
-import { pitch } from './audio/pitch'
+import './style.scss'
 
 // setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
 
