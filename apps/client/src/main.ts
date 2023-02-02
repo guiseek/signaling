@@ -193,4 +193,27 @@ takeStream().then((stream) => {
   section.appendChild(poodle)
 
   document.body.appendChild(section)
+
+  const checkbox = document.createElement('input')
+  checkbox.type = 'checkbox'
+
+  checkbox.onchange = (ev) => {
+    console.log(ev)
+    if (checkbox.checked) {
+      const [audioTrack] = stream.getAudioTracks()
+      replaceTrack(audioTrack)
+    } else {
+      const [audioTrack] = destination.stream.getAudioTracks()
+      replaceTrack(audioTrack)
+    }
+  }
+
+  document.body.appendChild(checkbox)
 })
+
+const replaceTrack = (audioTrack: MediaStreamTrack) => {
+  const track = peer
+    .getSenders()
+    .find(({ track }) => track && track.kind === 'audio')
+  track?.replaceTrack(audioTrack)
+}
