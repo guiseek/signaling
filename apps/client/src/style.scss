@@ -8,6 +8,7 @@ body {
   justify-content: center;
   align-items: center;
   row-gap: 32px;
+  accent-color: lime;
 }
 
 h1 {
@@ -15,4 +16,12 @@ h1 {
 }
 p {
   margin-top: 0;
+}
+
+section {
+  display: flex;
+
+  h2 {
+    font-size: 32px;
+  }
 }

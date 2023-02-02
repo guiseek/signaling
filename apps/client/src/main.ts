@@ -1,4 +1,4 @@
-import { combineLatest, distinctUntilChanged, filter, map } from 'rxjs'
+import { distinctUntilChanged, filter, map } from 'rxjs'
 import { Signaling } from './ports/signaling'
 import { SocketSignaling } from './adapter'
 import { pitch } from './audio/pitch'
@@ -31,9 +31,13 @@ signaling.on('offer', Offer)
 signaling.on('answer', Answer)
 signaling.on('candidate', Candidate)
 
+const d = document
 const stream = new MediaStream()
 const remote = createAudio()
 const local = createAudio()
+
+const output = d.createElement('output')
+document.body.appendChild(output)
 
 const peer = new RTCPeerConnection()
 
@@ -62,6 +66,7 @@ peer.oniceconnectionstatechange = () => {
 }
 peer.onconnectionstatechange = () => {
   state.update('connection', peer.connectionState)
+  output.innerText = peer.connectionState
 }
 peer.onicegatheringstatechange = () => {
   state.update('iceGathering', peer.iceGatheringState)
@@ -140,13 +145,17 @@ disconnected$.subscribe(() => {
   remote.remove()
 })
 
-combineLatest([retryAfterDisconnected$, retryAfterConnecting$]).subscribe(
-  async () => {
-    const offer = await createOffer(peer)
-    signaling.emit('offer', new Offer(offer))
-    signaling.log('Fomos desconectados, enviei uma nova oferta')
-  }
-)
+retryAfterConnecting$.subscribe(async () => {
+  const offer = await createOffer(peer)
+  signaling.emit('offer', new Offer(offer))
+  signaling.log('Fomos desconectados, enviei uma nova oferta')
+})
+
+retryAfterDisconnected$.subscribe(async () => {
+  const offer = await createOffer(peer)
+  signaling.emit('offer', new Offer(offer))
+  signaling.log('Fomos desconectados, enviei uma nova oferta')
+})
 
 peer.ontrack = ({ track }) => {
   if (track) {
@@ -167,5 +176,21 @@ takeStream().then((stream) => {
   const { input, destination } = pitch(stream)
   const [audioTrack] = destination.stream.getAudioTracks()
   peer.addTrack(audioTrack)
-  document.body.appendChild(input)
+
+  const monster = document.createElement('h2')
+  monster.innerText = `🧌`
+  monster.ariaLabel = 'Monstro'
+  monster.title = 'Monstro'
+
+  const poodle = document.createElement('h2')
+  poodle.innerText = `🐩`
+  poodle.ariaLabel = 'Poodle'
+  poodle.title = 'Poodle'
+
+  const section = document.createElement('section')
+  section.appendChild(monster)
+  section.appendChild(input)
+  section.appendChild(poodle)
+
+  document.body.appendChild(section)
 })
