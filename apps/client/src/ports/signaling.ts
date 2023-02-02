@@ -27,6 +27,7 @@ export abstract class Signaling<E extends WebRTCMap = WebRTCMap> {
   abstract emit<K extends keyof E>(type: K, value: IEvent<E[K]>): void
 
   log(...message: string[]) {
+    Signaling.incSeq()
     console.log(`${Signaling.SEQ}.`, ...message)
   }
 }

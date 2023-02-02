@@ -15,6 +15,9 @@ import {
   createOffer,
   createAnswer,
   createAudio,
+  takeStream,
+  pickTrack,
+  createAnalyser,
 } from './utilities'
 import { pitch } from './audio/pitch'
 
@@ -128,6 +131,9 @@ const disconnected$ = connection$.pipe(
 
 connected$.subscribe(() => {
   document.body.appendChild(remote)
+  if (remote.paused) {
+    remote.play()
+  }
 })
 
 disconnected$.subscribe(() => {
@@ -147,15 +153,19 @@ peer.ontrack = ({ track }) => {
     stream.addTrack(track)
     remote.srcObject = stream
     remote.autoplay = true
+    const { canvas, renderLoop } = createAnalyser(stream)
+    document.body.appendChild(canvas)
+    renderLoop()
   }
 }
 
-navigator.mediaDevices.getUserMedia({ audio: true }).then(async (stream) => {
-  const [audioTrack] = stream.getAudioTracks()
+takeStream().then((stream) => {
   local.srcObject = stream
   local.muted = true
-  peer.addTrack(audioTrack)
   document.body.appendChild(local)
 
-  document.body.appendChild(pitch(stream))
+  const { input, destination } = pitch(stream)
+  const [audioTrack] = destination.stream.getAudioTracks()
+  peer.addTrack(audioTrack)
+  document.body.appendChild(input)
 })
