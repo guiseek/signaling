@@ -16,6 +16,7 @@ import {
   createAnswer,
   createAudio,
 } from './utilities'
+import { pitch } from './audio/pitch'
 
 // setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
 
@@ -155,4 +156,6 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then(async (stream) => {
   local.muted = true
   peer.addTrack(audioTrack)
   document.body.appendChild(local)
+
+  document.body.appendChild(pitch(stream))
 })
