@@ -1,0 +1,60 @@
+html,
+body {
+  height: 100%;
+}
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  row-gap: 32px;
+  accent-color: lime;
+}
+
+h1 {
+  margin-bottom: 0;
+}
+p {
+  margin-top: 0;
+  line-height: 160%;
+  text-align: center;
+}
+
+output {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+section {
+  display: flex;
+  gap: 64px;
+}
+
+h2 {
+  font-size: 48px;
+}
+
+dl {
+  font-size: 14px;
+  max-height: 180px;
+  overflow: auto;
+  width: 640px
+}
+dt {
+  color: #999;
+}
+dd {
+  color: #666;
+}
+
+label {
+  display: flex;
+  flex-direction: row-reverse;
+  font-size: 20px;
+  gap: 8px;
+}
+
+input {
+  transform: scale(1.6);
+}

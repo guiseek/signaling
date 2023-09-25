@@ -28,6 +28,6 @@ export abstract class Signaling<E extends WebRTCMap = WebRTCMap> {
 
   log(...message: string[]) {
     Signaling.incSeq()
-    console.log(`${Signaling.SEQ}.`, ...message)
+    // console.log(`${Signaling.SEQ}.`, ...message)
   }
 }

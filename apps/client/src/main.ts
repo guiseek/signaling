@@ -1,45 +1,41 @@
-import { distinctUntilChanged, filter, map } from 'rxjs'
+import { delay, distinctUntilChanged, filter, interval, map } from 'rxjs'
+import { Offer, Answer, useState, Candidate, useProvider } from './core'
 import { Signaling } from './ports/signaling'
-import { SocketSignaling } from './adapter'
 import { pitch } from './audio/pitch'
-import {
-  Offer,
-  Answer,
-  useState,
-  Candidate,
-  setProvider,
-  useProvider,
-} from './core'
 import {
   ofType,
   canAnswer,
   createOffer,
   createAnswer,
-  createAudio,
   takeStream,
   createAnalyser,
+  create,
+  addLog,
+  select,
 } from './utilities'
-import './style.scss'
+import './style.css'
+import './provider'
+import { states } from './constantes'
 
-// setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
+export const signaling = useProvider(Signaling)
 
-// Execute "npm run dev:server" antes de usar o SocketSignaling
-setProvider(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
-
-const signaling = useProvider(Signaling)
 signaling.on('offer', Offer)
 signaling.on('answer', Answer)
 signaling.on('candidate', Candidate)
 
-const d = document
 const stream = new MediaStream()
-const remote = createAudio()
-const local = createAudio()
-
-const output = d.createElement('output')
-document.body.appendChild(output)
+let log: HTMLDListElement
 
 const peer = new RTCPeerConnection()
+
+const audioProps = { autoplay: true }
+const local = create('audio', audioProps)
+const remote = create('audio', audioProps)
+
+const output = create('output', {
+  innerText: 'guentae, rapidão',
+})
+document.body.appendChild(output)
 
 peer.onicecandidate = (ev) => {
   if (ev.candidate) {
@@ -116,8 +112,8 @@ peer.onnegotiationneeded = async () => {
 }
 
 const connection$ = state.select((state) => state.connection)
-
 const connected$ = connection$.pipe(filter((state) => state === 'connected'))
+
 const retryAfterConnecting$ = connection$.pipe(
   filter((state) => state === 'disconnected'),
   distinctUntilChanged((prev, curr) => {
@@ -157,6 +153,42 @@ retryAfterDisconnected$.subscribe(async () => {
   signaling.log('Fomos desconectados, enviei uma nova oferta')
 })
 
+interval(5000)
+  .pipe(
+    delay(3000),
+    map(() => peer.iceConnectionState)
+  )
+  .subscribe(async (state) => {
+    if (log === undefined) {
+      log = create('dl', { id: 'log' })
+      document.body.append(log)
+    }
+
+    if (state) {
+      addLog(states.ice[state])
+      select('dd:last-child').scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      })
+    }
+
+    switch (state) {
+      case 'new': {
+        const offer = await createOffer(peer)
+        signaling.emit('offer', new Offer(offer))
+        signaling.log('Enviei uma nova oferta')
+        break
+      }
+      case 'failed': {
+        const otps = { iceRestart: true }
+        const offer = await createOffer(peer, otps)
+        signaling.emit('offer', new Offer(offer))
+        signaling.log('Enviei uma oferta')
+        break
+      }
+    }
+  })
+
 peer.ontrack = ({ track }) => {
   if (track) {
     stream.addTrack(track)
@@ -177,28 +209,25 @@ takeStream().then((stream) => {
   const [audioTrack] = destination.stream.getAudioTracks()
   peer.addTrack(audioTrack)
 
-  const monster = document.createElement('h2')
-  monster.innerText = `🧌`
-  monster.ariaLabel = 'Monstro'
-  monster.title = 'Monstro'
+  const monster = create('h2', {
+    innerText: `🧌`,
+    ariaLabel: 'Monstro',
+    title: 'Monstro',
+  })
+  const poodle = create('h2', {
+    innerText: `🐩`,
+    ariaLabel: 'Poodle',
+    title: 'Poodle',
+  })
 
-  const poodle = document.createElement('h2')
-  poodle.innerText = `🐩`
-  poodle.ariaLabel = 'Poodle'
-  poodle.title = 'Poodle'
-
-  const section = document.createElement('section')
-  section.appendChild(monster)
-  section.appendChild(input)
-  section.appendChild(poodle)
+  const section = create('section')
+  section.append(monster, input, poodle)
 
   document.body.appendChild(section)
 
-  const checkbox = document.createElement('input')
-  checkbox.type = 'checkbox'
+  const checkbox = create('input', { type: 'checkbox', id: 'pitch' })
 
-  checkbox.onchange = (ev) => {
-    console.log(ev)
+  checkbox.onchange = () => {
     if (checkbox.checked) {
       const [audioTrack] = stream.getAudioTracks()
       replaceTrack(audioTrack)
@@ -208,7 +237,14 @@ takeStream().then((stream) => {
     }
   }
 
-  document.body.appendChild(checkbox)
+  queueMicrotask(() => checkbox.click())
+
+  const label = create(
+    'label',
+    { htmlFor: 'pitch', innerText: 'Pitch', title: 'Pitch' },
+    checkbox
+  )
+  document.body.append(label)
 })
 
 const replaceTrack = (audioTrack: MediaStreamTrack) => {
@@ -217,3 +253,7 @@ const replaceTrack = (audioTrack: MediaStreamTrack) => {
     .find(({ track }) => track && track.kind === 'audio')
   track?.replaceTrack(audioTrack)
 }
+
+url.innerText = origin
+url.target = '_blenk'
+url.href = origin

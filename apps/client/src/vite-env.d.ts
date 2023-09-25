@@ -45,3 +45,5 @@ interface RTCState {
 interface Provider {
   onmessage: ((ev: MessageEvent<any>) => any) | null
 }
+
+declare const url: HTMLAnchorElement
