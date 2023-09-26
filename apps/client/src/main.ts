@@ -1,21 +1,21 @@
 import { delay, distinctUntilChanged, filter, interval, map } from 'rxjs'
 import { Offer, Answer, useState, Candidate, useProvider } from './core'
 import { Signaling } from './ports/signaling'
+import { states } from './constantes'
 import { pitch } from './audio/pitch'
 import {
   ofType,
-  canAnswer,
-  createOffer,
-  createAnswer,
-  takeStream,
-  createAnalyser,
   create,
   addLog,
   select,
+  canAnswer,
+  takeStream,
+  createOffer,
+  createAnswer,
+  createAnalyser,
 } from './utilities'
 import './style.css'
 import './provider'
-import { states } from './constantes'
 
 export const signaling = useProvider(Signaling)
 
@@ -159,13 +159,18 @@ interval(5000)
     map(() => peer.iceConnectionState)
   )
   .subscribe(async (state) => {
+    let lastLog
+
+    let tick: ReturnType<typeof addLog>
     if (log === undefined) {
       log = create('dl', { id: 'log' })
+      tick = addLog(log)
       document.body.append(log)
     }
 
     if (state) {
-      addLog(states.ice[state])
+      const toLog = states.ice[state]
+      if (lastLog !== toLog) tick!(toLog)
       select('dd:last-child').scrollIntoView({
         behavior: 'smooth',
         block: 'end',
@@ -194,9 +199,9 @@ peer.ontrack = ({ track }) => {
     stream.addTrack(track)
     remote.srcObject = stream
     remote.autoplay = true
-    const { canvas, renderLoop } = createAnalyser(stream)
-    document.body.appendChild(canvas)
-    renderLoop()
+    const analyser = createAnalyser(stream)
+    document.body.appendChild(analyser.canvas)
+    analyser.renderLoop()
   }
 }
 

@@ -13,6 +13,7 @@ interface Payload<T, K = string> {
   sequence: number
   payload: T
 }
+
 interface Window {
   peer: RTCPeerConnection
 }

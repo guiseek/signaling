@@ -6,11 +6,10 @@ interface AnalyserOptions {
 }
 export const createAnalyser = (
   stream: MediaStream,
-  { color, opacity }: AnalyserOptions = { color: 'black', opacity: 1 }
+  { color, opacity }: AnalyserOptions = { color: '#ffffff', opacity: 0.16 }
 ) => {
   const canvas = document.createElement('canvas')
   const audioCtx = new AudioContext()
-  // audioCtx.suspend()
   const canvasCtx = canvas.getContext('2d') as CanvasRenderingContext2D
   canvasCtx.fillStyle = hexToRgba(color, opacity)
   const microphoneNode = audioCtx.createMediaStreamSource(stream)

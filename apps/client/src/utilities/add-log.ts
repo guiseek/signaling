@@ -1,6 +1,6 @@
 import { create } from './create'
 
-export function addLog(message: string) {
+export const addLog = (log: HTMLDListElement) => (message: string) => {
   const time = new Date().toLocaleTimeString()
   log.append(
     create('dt', { innerText: time }),
