@@ -7,24 +7,43 @@ body {
   display: flex;
   align-items: center;
   flex-direction: column;
-  padding-top: 48px;
+  justify-content: space-around;
   accent-color: rgb(255, 208, 0);
   background-image: url(../../../public/ts.svg);
-  background-position: calc(100vw - 400px) calc(100vh - 480px);
+  background-position: 16px -12px;
   background-repeat: no-repeat;
   background-color: #007acc;
-  background-size: 25% 25%;
+  background-size: 128px;
   max-height: calc(100vh - 112px);
-  row-gap: 16px;
+  row-gap: 32px;
   color: white;
 }
 
 h1 {
+  font-size: 48px;
   margin-bottom: 0;
 }
 
 h1 span {
   font-weight: 300;
+}
+
+h2 {
+  font-size: 36px;
+  text-align: center;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  row-gap: 12px;
+}
+
+h2 small {
+  display: flex;
+  justify-content: center;
+}
+
+h2 a {
+  font-weight: 500;
 }
 
 p {
@@ -52,11 +71,8 @@ output {
 
 section {
   display: flex;
+  align-items: baseline;
   gap: 64px;
-}
-
-h2 {
-  font-size: 48px;
 }
 
 dl {
@@ -66,7 +82,7 @@ dl {
   font-size: 14px;
   max-height: 220px;
   overflow: auto;
-  width: 100%
+  width: 100%;
 }
 dt {
   color: #ffffff33;
@@ -78,10 +94,10 @@ dd {
   transition: color 500ms ease-in;
 }
 
-dl:hover dt  {
+dl:hover dt {
   color: #ffffff88;
 }
-dl:hover dd  {
+dl:hover dd {
   color: #ffffff;
 }
 

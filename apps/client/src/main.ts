@@ -1,4 +1,4 @@
-import { delay, distinctUntilChanged, filter, interval, map } from 'rxjs'
+import { distinctUntilChanged, filter, interval, map } from 'rxjs'
 import { Offer, Answer, useState, Candidate, useProvider } from './core'
 import { Signaling } from './ports/signaling'
 import { states } from './constantes'
@@ -24,7 +24,9 @@ signaling.on('answer', Answer)
 signaling.on('candidate', Candidate)
 
 const stream = new MediaStream()
-let log: HTMLDListElement
+const log = create('dl', { id: 'log' })
+const tick = addLog(log)
+document.body.append(log)
 
 const peer = new RTCPeerConnection()
 
@@ -153,24 +155,19 @@ retryAfterDisconnected$.subscribe(async () => {
   signaling.log('Fomos desconectados, enviei uma nova oferta')
 })
 
-interval(5000)
-  .pipe(
-    delay(3000),
-    map(() => peer.iceConnectionState)
-  )
+let lastLog = ''
+
+interval(1000 * 20)
+  .pipe(map(() => peer.iceConnectionState))
   .subscribe(async (state) => {
-    let lastLog
-
-    let tick: ReturnType<typeof addLog>
-    if (log === undefined) {
-      log = create('dl', { id: 'log' })
-      tick = addLog(log)
-      document.body.append(log)
-    }
-
     if (state) {
       const toLog = states.ice[state]
-      if (lastLog !== toLog) tick!(toLog)
+
+      if (lastLog !== toLog) {
+        tick(toLog)
+        lastLog = toLog
+      }
+
       select('dd:last-child').scrollIntoView({
         behavior: 'smooth',
         block: 'end',
@@ -259,6 +256,13 @@ const replaceTrack = (audioTrack: MediaStreamTrack) => {
   track?.replaceTrack(audioTrack)
 }
 
-url.innerText = origin
-url.target = '_blenk'
-url.href = origin
+url.innerText = location.href
+url.title = 'Clique para copiar'
+url.style.cursor = 'pointer'
+url.onclick = (e) => {
+  e.preventDefault()
+  navigator.clipboard.writeText(location.href)
+  const copied = create('small', { innerText: 'Copiado...' })
+  url.after(copied)
+  setTimeout(() => copied.remove(), 1000)
+}
