@@ -9,7 +9,7 @@
 
 ### Como executa
 
-1. Execute no terminal `sh npm run dev:client`
+1. Execute no terminal `npm run dev:client`
 1. Abra http://localhost:5173 em duas abas
 
 ### Como usa
@@ -27,8 +27,8 @@ setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
 
 ### Como executa
 
-1. Execute no terminal `sh npm run dev:client`
-1. Execute no terminal `sh npm run dev:server`
+1. Execute no terminal `npm run dev:client`
+1. Execute no terminal `npm run dev:server`
 1. Abra http://localhost:5173 em duas abas
 
 ### Como usa
