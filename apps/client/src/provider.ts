@@ -1,6 +1,6 @@
 import { Signaling } from './ports/signaling'
-import { ChannelSignaling } from './adapter'
-// import { SocketSignaling } from './adapter'
+// import { ChannelSignaling } from './adapter'
+import { SocketSignaling } from './adapter'
 import { setProvider } from './core'
 
 /**
@@ -25,7 +25,7 @@ import { setProvider } from './core'
  * ```
  */
 
-setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
+// setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
 
 /* ---  ---  ---  ---  ---  ---  ---  --- --- */
 
@@ -51,4 +51,4 @@ setProvider(Signaling<WebRTCMap>, ChannelSignaling<WebRTCMap>)
  * ```
  */
 
-// setProvider(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)
+setProvider(Signaling<WebRTCMap>, SocketSignaling<WebRTCMap>)

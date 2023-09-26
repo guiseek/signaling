@@ -1,8 +1,8 @@
 import { Signaling } from '../ports/signaling'
 
 export class SocketSignaling<E extends WebRTCMap> extends Signaling<E> {
-  provider = new WebSocket('ws://localhost:3000')
-  // provider = new WebSocket('wss://gateway.p2p.works')
+  // provider = new WebSocket('ws://localhost:3000')
+  provider = new WebSocket('wss://gateway.p2p.works')
 
   onOpen(fn: <E>(e: E) => void): void {
     this.provider.onopen = fn

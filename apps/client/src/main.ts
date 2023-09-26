@@ -157,8 +157,11 @@ retryAfterDisconnected$.subscribe(async () => {
 
 let lastLog = ''
 
-interval(1000 * 20)
-  .pipe(map(() => peer.iceConnectionState))
+interval(1000 * 10)
+  .pipe(
+    map(() => peer.iceConnectionState),
+    filter((state) => state !== 'connected')
+  )
   .subscribe(async (state) => {
     if (state) {
       const toLog = states.ice[state]
